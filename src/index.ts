@@ -7,23 +7,31 @@ import {Variable, Type} from './ast'
 
 //////////////////////////////////////////////
 // Token definition.
-const 
+const
   ID = T(/[a-zA-Z_$][a-zA-Z0-9_$]+/),
   LPAREN = T('('),
   RPAREN = T(')'),
   COLON = T(':'),
   SEMICOLON = T(';'),
-  COMMA = T(',')
+  COMMA = T(','),
+  LT = T('<'),
+  GT = T('>')
 
 
 ////////////////////////////////////////////
 // Language rules.
 const
+  // since the semi colon is pretty much optional all the time,
+  // make a rule that uses it as is.
+  SEMI = Optional(SEMICOLON),
+
+  GENERICS = _(LT, GT),
+
   TYPE_DEF = _(
     ID
   ).tf(t => new Type()),
 
-  VAR_DECL = _(ID.as('const', 'var', 'let'), ID, COLON, TYPE_DEF, SEMICOLON),
+  VAR_DECL = _(ID.as('const', 'var', 'let'), ID, COLON, TYPE_DEF, SEMI),
 
   // Missing default value.
   ARGUMENT = _(ID, COLON, TYPE_DEF),
@@ -36,9 +44,15 @@ const
       FUN_DECL,
       TYPE_DEF
     )
+  ),
+
+  IMPORT = _(
+    ID.as('import'),
+
+    SEMI
   )
 
-const TSD = Language(Either(
+export const TSD = Language(Either(
   EXPORT,
   TYPE_DEF // No.
 )).tokenize(
