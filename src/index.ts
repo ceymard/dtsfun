@@ -1,21 +1,27 @@
 
 import {
-  Token as T, _, Language, Either, List, Optional
+  Token as T, _, Language, Either, List, Optional, Forward, Rule, TokenList
 } from 'pegp'
 
-import {Variable, Type} from './ast'
+import {Type} from './ast'
 
 //////////////////////////////////////////////
 // Token definition.
+
+const t = new TokenList()
+const sk = new TokenList()
+sk.add(/[\n\s\t\r ]+/)
+
 const
-  ID = T(/[a-zA-Z_$][a-zA-Z0-9_$]+/),
-  LPAREN = T('('),
-  RPAREN = T(')'),
-  COLON = T(':'),
-  SEMICOLON = T(';'),
-  COMMA = T(','),
-  LT = T('<'),
-  GT = T('>')
+  ID = t.add(/[a-zA-Z_$][a-zA-Z0-9_$]+/),
+  LPAREN = t.add('('),
+  RPAREN = t.add(')'),
+  COLON = t.add(':'),
+  SEMICOLON = t.add(';'),
+  COMMA = t.add(','),
+  LT = t.add('<'),
+  GT = t.add('>'),
+  SINGLE_COMMENT = sk.add(/\/\/[^\n]*\n/)
 
 
 ////////////////////////////////////////////
@@ -25,11 +31,16 @@ const
   // make a rule that uses it as is.
   SEMI = Optional(SEMICOLON),
 
-  GENERICS = _(LT, GT),
+  GENERICS: Rule<any> = _(LT, List(Forward(() => TYPE_DEF), COMMA), GT),
 
   TYPE_DEF = _(
-    ID
-  ).tf(t => new Type()),
+    ID,
+    Optional(GENERICS)
+  ).tf(([id, gen]) =>
+    new Type()
+    .name(id.text)
+    .doc('hello')
+  ),
 
   VAR_DECL = _(ID.as('const', 'var', 'let'), ID, COLON, TYPE_DEF, SEMI),
 
@@ -55,8 +66,4 @@ const
 export const TSD = Language(Either(
   EXPORT,
   TYPE_DEF // No.
-)).tokenize(
-  ID,
-  COLON,
-  SEMICOLON
-)
+)).tokens(t).skip(sk)

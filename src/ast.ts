@@ -1,16 +1,33 @@
 
+export interface Accessor<T, This> {
+  (): T
+  (arg: T): This
+}
+
+function a(target: any, name: string) {
+  target[name] = function (this: any, arg?: any) {
+    if (typeof arg !== 'undefined') {
+      this['_' + name] = arg
+      return this
+    } else {
+      return this['_' + name]
+    }
+  }
+}
 
 export abstract class Declaration {
-  name: string
-  doc: string
+
+  @a doc: Accessor<string, this>
+  @a name: Accessor<string, this>
+
 }
 
 export class Module extends Declaration {
-  exports: Declaration[]
+  @a exports: Accessor<Declaration[], this>
 }
 
 export class Variable extends Declaration {
-  type: Type // a reference to a type.
+  _type: Type // a reference to a type.
 }
 
 
