@@ -1,3 +1,6 @@
 {
-  "name": "dtsfun"
+  "name": "dtsfun",
+  "devDependencies": {
+    "@types/node": "^8.0.7"
+  }
 }
