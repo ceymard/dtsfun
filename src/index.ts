@@ -1,6 +1,6 @@
 
 import {
-  SequenceOf, Language, Either, List, Optional, Rule, TokenList, LanguageRule,
+  SequenceOf, Language, Either, List, Optional, Rule, TokenList,
   ZeroOrMore
 } from 'pegp'
 
@@ -9,35 +9,39 @@ import * as ast from './ast'
 //////////////////////////////////////////////
 // Token definition.
 
-const token_list = new TokenList()
+const tl = new TokenList()
 
 const T = {
-  space: token_list.skip(/[\n\s\t\r ]+/),
+  space: tl.skip(/[\n\s\t\r ]+/),
   // single comment.
-  comment: token_list.skip(/\/\/[^\n]*\n/),
+  comment: tl.skip(/\/\/[^\n]*\n/),
   // we skip semi colons since they're not significant
   // they would only be useful if we had ambiguous return statements or function calls,
   // but .d.ts files are actually rather clean so we really don't want to have
   // to say Optional(semi) everywhere.
-  semi: token_list.skip(';'),
+  semi: tl.skip(';'),
   // We add the multi comment as skippable as we will only occasionnaly look
   // for it.
-  multi_comment: token_list.skip(/\/\*((?!:\*\/).)*\*\//),
-  string: token_list.add(/'((\\')|[^'])*'|"((\\")|[^'])*"/),
-  number: token_list.add(/[0-9]+(\.[0-9]+)?/),
-  id: token_list.add(/[a-zA-Z_$][a-zA-Z0-9_$]+/),
-  fat_arrow: token_list.add('=>'),
-  quote: token_list.add("'"),
-  dquote: token_list.add('"'),
-  backtick: token_list.add('`'),
-  lparen: token_list.add('('),
-  rparen: token_list.add(')'),
-  lbracket: token_list.add('{'),
-  rbracket: token_list.add('}'),
-  colon: token_list.add(':'),
-  comma: token_list.add(','),
-  lt: token_list.add('<'),
-  gt: token_list.add('>')
+  multi_comment: tl.skip(/\/\*((?!\*\/).|\n)*\*\//),
+  string: tl.add(/'((\\')|[^'])*'|"((\\")|[^'])*"/),
+  number: tl.add(/[0-9]+(\.[0-9]+)?/),
+  id: tl.add(/[a-zA-Z_$][a-zA-Z0-9_$]*/),
+  fat_arrow: tl.add('=>'),
+  quote: tl.add("'"),
+  dquote: tl.add('"'),
+  backtick: tl.add('`'),
+  lparen: tl.add('('),
+  rparen: tl.add(')'),
+  lbrace: tl.add('{'),
+  rbrace: tl.add('}'),
+  lbracket: tl.add('['),
+  rbracket: tl.add(']'),
+  colon: tl.add(':'),
+  comma: tl.add(','),
+  pipe: tl.add('|'),
+  ellipsis: tl.add('...'),
+  lt: tl.add('<'),
+  gt: tl.add('>')
 }
 
 /**
@@ -69,32 +73,50 @@ const
   multi_line_comment = Optional(T.multi_comment)
     .tf(lex => lex != null ? lex.text : ''),
 
-  generic_arguments = SequenceOf(T.lt, List(() => type, T.comma), T.gt)
+  generic_arguments = SequenceOf(T.lt, List(() => type_litteral, T.comma), T.gt)
     .tf(([lt, types, gt]) => types),
 
-  type_function = SequenceOf(
+  function_type_litteral = SequenceOf(
     Optional(generic_arguments), 
     T.lparen, 
     Optional(() => argument_list), 
     T.rparen,
     T.fat_arrow,
-    () => type
+    () => type_litteral
+  ).tf(([gen, lp, args, rp, fa, type]) => new ast.FunctionLiteral()
+    .type_arguments(gen)
+    .arguments(args)
+    .return_type(type)
   ),
 
-  type: Rule<ast.Type> = SequenceOf(
+  named_type = SequenceOf(
     T.id,
     Optional(generic_arguments)
   ).tf(([id, args]) =>
-    new ast.Type()
+    new ast.NamedType()
       .name(id.text)
       .type_arguments(args)
   ),
+
+  type_litteral: Rule<ast.TypeLiteral> = List(
+    Either(
+      SequenceOf(
+        Either(
+          named_type,
+          function_type_litteral
+        ),
+        ZeroOrMore(SequenceOf(T.lbracket, T.rbracket))
+      ).tf(([type, array_number]) => type.array_number(array_number.length)),
+      SequenceOf(T.lparen, () => type_litteral, T.rparen).tf(([lp, type, rp]) => type)
+    ),
+    T.pipe
+  ).tf((lst) => lst.length > 1 ? new ast.UnionType().types(lst) : lst[0]),
 
   var_decl = SequenceOf(
     Either(K.const, K.let, K.var), 
     T.id, 
     T.colon, 
-    type
+    type_litteral
   ).tf(([kind, id, colon, type]) => 
     new ast.Variable()
       .kind(kind.text)
@@ -104,11 +126,12 @@ const
 
   // There are no default values in .d.ts files.
 
-  argument = SequenceOf(T.id, T.colon, type)
-    .tf(([id, colon, type]) => 
+  argument = SequenceOf(Optional(T.ellipsis), T.id, T.colon, type_litteral)
+    .tf(([ellipsis, id, colon, type]) => 
       new ast.Argument()
         .name(id.text)
         .type(type)
+        .ellipsis(ellipsis != null)
     ),
     
   argument_list = List(argument, T.comma),
@@ -121,7 +144,7 @@ const
     Optional(argument_list), 
     T.rparen, 
     T.colon, 
-    type
+    type_litteral
   ).tf(([fun, id, type_args, lp, args, rp, colon, type]) => 
     new ast.Function()
       .name(id.text)
@@ -136,21 +159,30 @@ const
     Optional(K.declare), 
     Either(
       var_decl,
-      function_decl,
-      type
+      function_decl
     )
-  ).tf(([comment, kex, kdecl, decl]) => decl.doc(comment)),
+  ).tf(([comment, kex, kdecl, decl]) => decl.doc(comment).is_export(true)),
 
-  import_var = SequenceOf(T.id, Optional(SequenceOf(K.as, T.id))),
+  import_var = SequenceOf(T.id, Optional(SequenceOf(K.as, T.id).tf(([ask, id]) => id)))
+    .tf(([id, as_id]) => 
+      new ast.Import()
+        .name(id.text)
+        .as(as_id ? as_id.text : null)
+    ),
+
+  from_clause = SequenceOf(K.from, T.string).tf(([k, str]) => str.text),
 
   import_rule = SequenceOf(
     K.import,
-    T.lbracket,
+    T.lbrace,
     List(import_var, T.comma),
-    T.rbracket,
-    K.from,
-    T.string
-  ),
+    T.rbrace,
+    from_clause
+  ).tf(([ik, lb, imports, rb, mod_name]) => 
+    new ast.ImportList()
+      .imports(imports)
+      .module_name(mod_name)
+    ),
 
   global = SequenceOf(K.global),
 
@@ -160,28 +192,29 @@ const
     K.declare,
     K.module,
     T.id, // module name
-    T.lbracket,
+    T.lbrace,
     ZeroOrMore(Either(
       import_rule,
       export_rule,
       global
     )),
-    T.rbracket
+    T.rbrace
   ),
 
   top_level_decl = ZeroOrMore(Either(
     import_rule,
     export_rule,
-    module_decl
+    SequenceOf(K.declare, K.global, T.lbrace, ZeroOrMore(function_decl), T.rbrace)
+      .tf(([k1, k2, k3, decls, k4]) => new ast.GlobalAugmentations().augmentations(decls))
   ))
 
 /**
  * A tsd file contains either a declaration of several modules
  * or directly exports (optionally with some sub-module declarations...)
  */
-export const TSD: LanguageRule<any> = Language(top_level_decl, token_list)
+const TSD = Language(top_level_decl, tl)
 
 //////// TEMP
 const fs = require('fs')
 const res = fs.readFileSync('/dev/stdin', 'utf-8')
-console.log(TSD.parse(res))
+TSD.parse(res).forEach(r => console.log(r.render()))

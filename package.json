@@ -1,5 +1,5 @@
 {
-  "name": "dtsfun",
+  "name": "dts-tool",
   "devDependencies": {
     "@types/node": "^8.0.7"
   }
