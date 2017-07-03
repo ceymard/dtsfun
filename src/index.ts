@@ -41,7 +41,8 @@ const T = {
   pipe: tl.add('|'),
   ellipsis: tl.add('...'),
   lt: tl.add('<'),
-  gt: tl.add('>')
+  gt: tl.add('>'),
+  star: tl.add('*')
 }
 
 /**
@@ -55,9 +56,14 @@ const K = {
   as: T.id.as('as'),
   declare: T.id.as('declare'),
 
+
   module: T.id.as('module'),
 
+  type: T.id.as('type'),
   function: T.id.as('function'),
+  interface: T.id.as('interface'),
+  class: T.id.as('class'),
+  namespace: T.id.as('namespace'),
 
   const: T.id.as('const'),
   var: T.id.as('var'),
@@ -153,6 +159,13 @@ const
       .return_type(type)
   ),
 
+  single_import_or_export = SequenceOf(T.id, Optional(SequenceOf(K.as, T.id).tf(([ask, id]) => id)))
+    .tf(([id, as_id]) => 
+      new ast.SingleImportExport()
+        .name(id.text)
+        .as(as_id ? as_id.text : null)
+    ),
+
   export_rule = SequenceOf(
     multi_line_comment,
     K.export, 
@@ -163,25 +176,36 @@ const
     )
   ).tf(([comment, kex, kdecl, decl]) => decl.doc(comment).is_export(true)),
 
-  import_var = SequenceOf(T.id, Optional(SequenceOf(K.as, T.id).tf(([ask, id]) => id)))
-    .tf(([id, as_id]) => 
-      new ast.Import()
-        .name(id.text)
-        .as(as_id ? as_id.text : null)
-    ),
 
   from_clause = SequenceOf(K.from, T.string).tf(([k, str]) => str.text),
+
+  export_from = SequenceOf(
+    K.export,
+    Either(
+      SequenceOf(
+        T.lbrace,
+        List(single_import_or_export, T.comma),
+        T.rbrace,
+      ).tf(([lb, lst, rb]) => lst),
+      T.star.tf(star => [new ast.SingleImportExport().name('*')])
+    ),
+    from_clause
+  ).tf(([ik, exports, mod_name]) => 
+    new ast.ExportList()
+    .imports(exports)
+    .from_module(mod_name)
+  ),
 
   import_rule = SequenceOf(
     K.import,
     T.lbrace,
-    List(import_var, T.comma),
+    List(single_import_or_export, T.comma),
     T.rbrace,
     from_clause
   ).tf(([ik, lb, imports, rb, mod_name]) => 
     new ast.ImportList()
       .imports(imports)
-      .module_name(mod_name)
+      .from_module(mod_name)
     ),
 
   global = SequenceOf(K.global),
@@ -204,6 +228,7 @@ const
   top_level_decl = ZeroOrMore(Either(
     import_rule,
     export_rule,
+    export_from,
     SequenceOf(K.declare, K.global, T.lbrace, ZeroOrMore(function_decl), T.rbrace)
       .tf(([k1, k2, k3, decls, k4]) => new ast.GlobalAugmentations().augmentations(decls))
   ))
@@ -217,4 +242,5 @@ const TSD = Language(top_level_decl, tl)
 //////// TEMP
 const fs = require('fs')
 const res = fs.readFileSync('/dev/stdin', 'utf-8')
-TSD.parse(res).forEach(r => console.log(r.render()))
+var result = TSD.parse(res)
+console.log(result)
