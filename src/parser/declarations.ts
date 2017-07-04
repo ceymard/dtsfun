@@ -77,7 +77,7 @@ export const
   ).tf(([id, decls]) => new ast.Namespace().set({name: id.text, declarations: decls})),
 
   DECLARATION: Rule<ast.Declaration> = SequenceOf(
-    MULTI_COMMENT.tap(c => console.log(c)),
+    MULTI_COMMENT,
     Either(
       NAMESPACE,
       VAR,
