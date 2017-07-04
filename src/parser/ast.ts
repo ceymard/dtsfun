@@ -79,6 +79,10 @@ export class UnionType extends Type {
   types: Type[]
 }
 
+export class IntersectionType extends Type {
+  types: Type[]
+}
+
 export class FunctionLiteral extends Type {
   is_new = false
   type_parameters: TypeParameter[] = []

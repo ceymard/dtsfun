@@ -14,7 +14,7 @@ export const T = {
   semi: tl.skip(';'),
   // We add the multi comment as skippable as we will only occasionnaly look
   // for it.
-  multi_comment: tl.skip(/\/\*((?!\*\/).|\n)*\*\//),
+  multi_comment: tl.skip(/\/\*((?!\*\/).|\n|\r)*\*\//m),
   string: tl.add(/'((\\')|[^'])*'|"((\\")|[^'])*"/),
   number: tl.add(/[0-9]+(\.[0-9]+)?/),
   id: tl.add(/[a-zA-Z_$][a-zA-Z0-9_$]*/),
@@ -37,7 +37,8 @@ export const T = {
   lt: tl.add('<'),
   gt: tl.add('>'),
   star: tl.add('*'),
-  dot: tl.add('.')
+  dot: tl.add('.'),
+  ampersand: tl.add('&')
 }
 
 function kw(name: string) {

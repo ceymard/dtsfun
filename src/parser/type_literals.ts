@@ -72,7 +72,7 @@ export const
 
   PROPERTY = SequenceOf(
     MULTI_COMMENT,
-    Either(T.id, T.string),
+    Either(T.id, T.string, T.number),
     Optional(T.interrogation),
     LastOf(T.colon, () => TYPE)
   ).tf(([doc, id, opt, type]) => new ast.Property().set({name: id.text, is_optional: !!opt, type, doc})),
@@ -140,11 +140,9 @@ export const
   )
     .tf(([type, modifiers]) => modifiers.reduce((acc, mod) => mod.set({type: acc}), type)),
 
-  TYPE: Rule<ast.Type> = List(
-    Either(
-      ARRAY_TYPE,
-      TYPE_BASE,
-    ),
-    T.pipe
-  )
-                                  .tf((lst) => lst.length > 1 ? new ast.UnionType().set({types: (lst)}) : lst[0])
+  INTERSECTION_TYPE = List(ARRAY_TYPE, T.ampersand).tf((lst) => lst.length > 1 ? new ast.IntersectionType().set({types: (lst)}) : lst[0]),
+
+  UNION_TYPE = List(INTERSECTION_TYPE, T.pipe).tf((lst) => lst.length > 1 ? new ast.UnionType().set({types: (lst)}) : lst[0]),
+
+  TYPE: Rule<ast.Type> = UNION_TYPE
+                                  
