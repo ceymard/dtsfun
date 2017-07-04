@@ -36,7 +36,8 @@ export const T = {
   ellipsis: tl.add('...'),
   lt: tl.add('<'),
   gt: tl.add('>'),
-  star: tl.add('*')
+  star: tl.add('*'),
+  dot: tl.add('.')
 }
 
 function kw(name: string) {

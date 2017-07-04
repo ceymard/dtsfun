@@ -1,5 +1,5 @@
 
-import {LastOf, SequenceOf, Optional, Either, List, ZeroOrMore, Rule, Lexeme, SequenceRule, ZeroOrMoreRule} from 'pegp'
+import {FirstOf, LastOf, SequenceOf, Optional, Either, List, ZeroOrMore, Rule, Lexeme, SequenceRule, ZeroOrMoreRule} from 'pegp'
 import {K, T, MULTI_COMMENT} from './base'
 import * as decl from './declarations'
 import * as ast from './ast'
@@ -38,8 +38,17 @@ export const
 
 
   IMPORT = SequenceOf(
-    LastOf(K.import, T.lbrace, List(SINGLE_IMPORT_EXPORT, T.comma)),
-    LastOf(T.rbrace, FROM_CLAUSE)
+    LastOf(
+      K.import,
+      Either(
+        LastOf(
+          T.lbrace, 
+          FirstOf(List(SINGLE_IMPORT_EXPORT, T.comma), T.rbrace)
+        ),
+        LastOf(T.star, K.as, T.id).tf(id => [new ast.SingleImportExport().set({name: '*', as: id.text})])
+      )
+    ),
+    FROM_CLAUSE
   ).tf(([imports, from_module]) => 
     new ast.ImportList().set({imports, from_module})
   ),
@@ -73,5 +82,6 @@ export const
     IMPORT,
     EXPORT_DECLARATION,
     EXPORT_FROM,
+    MODULE,
     DECLARE_GLOBAL
   ))

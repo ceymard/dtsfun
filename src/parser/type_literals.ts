@@ -90,20 +90,23 @@ export const
 
   ///////////////////////////////////////////////////
   FUNCTION = SequenceOf(
+    Optional(K.new),
     TYPE_PARAMETERS, 
     ARGUMENT_LIST, 
     LastOf(T.fat_arrow, () => TYPE)
   )
-                                  .tf(([params, args, return_type]) => new ast.FunctionLiteral().set({
-                                    type_parameters: params, arguments: args || [], return_type
+                                  .tf(([is_new, params, args, return_type]) => new ast.FunctionLiteral().set({
+                                    type_parameters: params, arguments: args || [], return_type, is_new: !!is_new
                                   })),
+
+  DOTTED_NAME = List(T.id.tf(id => id.text), T.dot),
 
   ///////////////////////////////////////////////////
   NAMED = SequenceOf(
-    T.id,
+    DOTTED_NAME,
     Optional(TYPE_ARGUMENTS)
-  )                               .tf(([id, type_arguments]) =>
-                                    new ast.NamedType().set({name: id.text, type_arguments})
+  )                               .tf(([name, type_arguments]) =>
+                                    new ast.NamedType().set({name, type_arguments})
                                   ),
 
   TUPLE = SequenceOf(

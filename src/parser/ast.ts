@@ -42,11 +42,15 @@ export class ImportList extends Node {
   from_module: string
   // module: Module
 
-  kind = 'import'
+}
+
+export class ImportAs extends Node {
+  name: string
+  from_module: string
 }
 
 export class ExportList extends ImportList {
-  kind = 'export'
+
 }
 
 export class Variable extends Declaration {
@@ -64,6 +68,7 @@ export class UnionType extends Type {
 }
 
 export class FunctionLiteral extends Type {
+  is_new = false
   type_parameters: TypeParameter[] = []
   arguments: Argument[] = []
   return_type: Type
@@ -81,7 +86,7 @@ export class ObjectLiteral extends Type {
  * A reference to a type. Will have to be resolved later.
  */
 export class NamedType extends Type {
-  name: string
+  name: string[] // Named types have potentially qualified names
   type_arguments: Type[] | null = null
 }
 
