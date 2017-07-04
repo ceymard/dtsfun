@@ -1,60 +1,78 @@
+/**
+ * Type literals are types that use already declared types to build new ones.
+ */
 
-import {_, SequenceOf, List, Optional, Either, ZeroOrMore, Rule} from 'pegp'
+import {LastOf, SequenceOf, List, Optional, Either, ZeroOrMore, Rule} from 'pegp'
 import {T} from './base'
 
 import * as ast from './ast'
 
 export const 
-  argument = SequenceOf(
+  ARGUMENT = SequenceOf(
     Optional(T.ellipsis), 
-    T.id, 
-    _(T.colon, () => type_literal)
+    T.id,
+    Optional(T.interrogation),
+    LastOf(T.colon, () => TYPE)
   )
-                                  .tf(([ellipsis, id, type]) => 
-                                    new ast.Argument().set({name: id.text, type, ellipsis: ellipsis != null})
-                                  ),
+                                  .tf(([ellipsis, id, optional, type]) => 
+                                    new ast.Argument().set({
+                                      name: id.text, 
+                                      type, 
+                                      ellipsis: ellipsis != null, 
+                                      optional: optional != null
+                                  })),
 
   ///////////////////////////////////////////////////
-  argument_list = List(argument, T.comma),
+  ARGUMENT_LIST = SequenceOf(
+    LastOf(T.lparen, Optional(List(ARGUMENT, T.comma))), 
+    T.rparen
+  )
+    .tf(([lst]) => lst || []),
 
   ///////////////////////////////////////////////////
-  generic_arguments = SequenceOf(
-    _(T.lt, List(() => type_literal, T.comma)), 
+  GENERIC_ARGUMENTS = SequenceOf(
+    LastOf(T.lt, List(() => TYPE, T.comma)), 
     T.gt
   )
                                   .tf(([types]) => types),
 
 
   ///////////////////////////////////////////////////
-  function_type_literal = SequenceOf(
-    Optional(generic_arguments), 
-    _(T.lparen, Optional(argument_list)), 
-    _(T.rparen, T.fat_arrow, () => type_literal)
+  FUNCTION = SequenceOf(
+    Optional(GENERIC_ARGUMENTS), 
+    ARGUMENT_LIST, 
+    LastOf(T.fat_arrow, () => TYPE)
   )
                                   .tf(([type_arguments, args, return_type]) => new ast.FunctionLiteral().set({
-                                    type_arguments, arguments: args, return_type
+                                    type_arguments: type_arguments || [], arguments: args || [], return_type
                                   })),
 
   ///////////////////////////////////////////////////
-  named_type = SequenceOf(
+  NAMED = SequenceOf(
     T.id,
-    Optional(generic_arguments)
+    Optional(GENERIC_ARGUMENTS)
   )                               .tf(([id, type_arguments]) =>
                                     new ast.NamedType().set({name: id.text, type_arguments})
                                   ),
 
+  TUPLE = SequenceOf(
+    LastOf(T.lbracket, List(() => TYPE, T.comma)),
+    T.rbracket
+  )                               .tf(([lst]) => new ast.TupleLiteral().set({types: lst})),
+
   ///////////////////////////////////////////////////
-  type_literal: Rule<ast.TypeLiteral> = List(
+  TYPE: Rule<ast.TypeLiteral> = List(
     Either(
       SequenceOf(
         Either(
-          named_type,
-          function_type_literal
-        ),
+          FUNCTION,
+          TUPLE,
+          NAMED,
+        ) as Rule<ast.TypeLiteral>,
         ZeroOrMore(SequenceOf(T.lbracket, T.rbracket))
-      )                           .tf(([type, array_number]) => (type as ast.TypeLiteral).set({array_number: array_number.length})),
+      )                           .tf(([type, array_number]) => type.set({array_number: array_number.length})),
 
-      SequenceOf(T.lparen, () => type_literal, T.rparen)
+      SequenceOf(T.lparen, () => TYPE, T.rparen)
                                   .tf(([lp, type, rp]) => type)
     ),
     T.pipe

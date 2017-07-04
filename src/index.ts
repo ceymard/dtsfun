@@ -3,8 +3,10 @@ import {
   Language,
 } from 'pegp'
 
+export * from './parser/ast'
+
 import {tl} from './parser/base'
-import {top_level_decl} from './parser/module'
+import {TOP_LEVEL} from './parser/module'
 
 
 ////////////////////////////////////////////
@@ -14,7 +16,7 @@ import {top_level_decl} from './parser/module'
  * A tsd file contains either a declaration of several modules
  * or directly exports (optionally with some sub-module declarations...)
  */
-const TSD = Language(top_level_decl, tl)
+const TSD = Language(TOP_LEVEL, tl)
 
 //////// TEMP
 const fs = require('fs')

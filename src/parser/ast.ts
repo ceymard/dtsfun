@@ -60,11 +60,14 @@ export class UnionType extends TypeLiteral {
 }
 
 export class FunctionLiteral extends TypeLiteral {
-  type_arguments: TypeLiteral[] | null = null
-  arguments: Argument[] | null = null
+  type_arguments: TypeLiteral[] = []
+  arguments: Argument[] = []
   return_type: TypeLiteral
 }
 
+export class TupleLiteral extends TypeLiteral {
+  types: TypeLiteral[] = []
+}
 
 /**
  * A reference to a type. Will have to be resolved later.
@@ -75,15 +78,8 @@ export class NamedType extends TypeLiteral {
 }
 
 export class TypeDeclaration extends Declaration {
-
-}
-
-export class Class extends TypeDeclaration {
-
-}
-
-export class Interface extends TypeDeclaration {
-
+  name: string
+  type: TypeLiteral
 }
 
 export class Argument extends Declaration {
@@ -98,12 +94,49 @@ export class Function extends Declaration {
   return_type: TypeLiteral
 }
 
-export class GlobalAugmentations extends Node {
-  augmentations: Declaration[]
+export class Member extends Declaration {
+  is_static: boolean
+  visibility: string // public, private or protected
+}
+
+export class Property extends Member {
+  type: TypeLiteral
+}
+
+export class Method extends Member implements Function {
+  type_arguments: TypeLiteral[] = []
+  arguments: Argument[] = []
+  return_type: TypeLiteral
+}
+
+export class MemberHolder extends Declaration {
+  members: Member[] = []
+}
+
+export class Implementer extends MemberHolder {
+  extends: TypeLiteral | null = null
+  implements: TypeLiteral[] = []
+  generic_arguments: TypeLiteral[] = []
+}
+
+export class Interface extends Implementer { }
+export class Class extends Implementer { }
+
+
+export class DeclarationHolder extends Declaration {
+  declarations: Declaration[] = []
+}
+
+export class GlobalAugmentations extends DeclarationHolder {
+
 }
 
 
-export class SourceFile extends Node {
+export class Namespace extends DeclarationHolder {
+  name: string
+}
+
+
+export class SourceFile extends DeclarationHolder {
   path: string
-  declarations: Declaration[]
 }

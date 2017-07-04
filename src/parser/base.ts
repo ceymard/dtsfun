@@ -19,6 +19,8 @@ export const T = {
   number: tl.add(/[0-9]+(\.[0-9]+)?/),
   id: tl.add(/[a-zA-Z_$][a-zA-Z0-9_$]*/),
   fat_arrow: tl.add('=>'),
+  equal: tl.add('='),
+  interrogation: tl.add('?'),
   quote: tl.add("'"),
   dquote: tl.add('"'),
   backtick: tl.add('`'),
@@ -37,28 +39,40 @@ export const T = {
   star: tl.add('*')
 }
 
+function kw(name: string) {
+  return T.id.as(name)
+}
+
 /**
  * Keywords taken from the t_id rule for shorter declarations.
  */
 export const K = {
-  global: T.id.as('global') as Rule<Lexeme>,
-  export: T.id.as('export'),
-  import: T.id.as('import'),
-  from: T.id.as('from'),
-  as: T.id.as('as'),
-  declare: T.id.as('declare'),
+  global: kw('global'),
+  export: kw('export'),
+  import: kw('import'),
+  from: kw('from'),
+  as: kw('as'),
+  declare: kw('declare'),
 
-  module: T.id.as('module'),
+  module: kw('module'),
 
-  type: T.id.as('type'),
-  function: T.id.as('function'),
-  interface: T.id.as('interface'),
-  class: T.id.as('class'),
-  namespace: T.id.as('namespace'),
+  public: kw('public'),
+  private: kw('private'),
+  protected: kw('protected'),
+  static: kw('static'),
+  new: kw('new'),
+  extends: kw('extends'),
+  implements: kw('implements'),
 
-  const: T.id.as('const'),
-  var: T.id.as('var'),
-  let: T.id.as('let'),
+  type: kw('type'),
+  function: kw('function'),
+  interface: kw('interface'),
+  class: kw('class'),
+  namespace: kw('namespace'),
+
+  const: kw('const'),
+  var: kw('var'),
+  let: kw('let'),
 }
 
 
@@ -66,5 +80,5 @@ export const
   /**
    * Get a multi-line comment and return its text directly.
    */
-  multi_line_comment = Optional(T.multi_comment)
+  MULTI_COMMENT = Optional(T.multi_comment)
     .tf(lex => lex != null ? lex.text : '')
