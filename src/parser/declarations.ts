@@ -10,7 +10,7 @@
  */
 
 import {LastOf, SequenceOf, Either, Optional, Rule, ZeroOrMore, List} from 'pegp'
-import {T, K} from './base'
+import {T, K, MULTI_COMMENT} from './base'
 import * as lit from './type_literals'
 
 import * as ast from './ast'
@@ -76,10 +76,13 @@ export const
     T.rbrace
   ).tf(([id, decls]) => new ast.Namespace().set({name: id.text, declarations: decls})),
 
-  DECLARATION: Rule<ast.Declaration> = Either(
-    NAMESPACE,
-    VAR,
-    FUNCTION,
-    TYPE,
-    INTERFACE_OR_CLASS,
-  )
+  DECLARATION: Rule<ast.Declaration> = SequenceOf(
+    MULTI_COMMENT.tap(c => console.log(c)),
+    Either(
+      NAMESPACE,
+      VAR,
+      FUNCTION,
+      TYPE,
+      INTERFACE_OR_CLASS,
+    ) as Rule<ast.Declaration>,
+  ).tf(([comment, rule]) => rule.set({doc: comment}))

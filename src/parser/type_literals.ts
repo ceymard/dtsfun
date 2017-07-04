@@ -3,7 +3,7 @@
  */
 
 import {LastOf, FirstOf, SequenceOf, List, Optional, Either, ZeroOrMore, Rule} from 'pegp'
-import {T, K} from './base'
+import {T, K, MULTI_COMMENT} from './base'
 
 import * as ast from './ast'
 
@@ -70,10 +70,11 @@ export const
   ).tf(([id, key_type, opt, type]) => new ast.DynamicProperty().set({type, name: id.text, key_type, is_optional: !!opt})),
 
   PROPERTY = SequenceOf(
+    MULTI_COMMENT,
     Either(T.id, T.string),
     Optional(T.interrogation),
     LastOf(T.colon, () => TYPE)
-  ).tf(([id, opt, type]) => new ast.Property().set({name: id.text, is_optional: !!opt, type})),
+  ).tf(([doc, id, opt, type]) => new ast.Property().set({name: id.text, is_optional: !!opt, type, doc})),
 
   MEMBER = SequenceOf(
     Optional(K.static),
