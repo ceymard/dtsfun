@@ -31,7 +31,7 @@ export const
   // There are no default values in .d.ts files.
   FUNCTION = SequenceOf(
     LastOf(K.function, T.id),
-    Optional(lit.GENERIC_ARGUMENTS),
+    Optional(lit.TYPE_ARGUMENTS),
     lit.ARGUMENT_LIST, 
     LastOf(T.colon, lit.TYPE)
   ).tf(([id, type_arguments, args, return_type]) => 
@@ -46,7 +46,7 @@ export const
   METHOD = SequenceOf(
     Optional(K.new),
     Optional(T.id), // The name is optional, as it could be a constructor
-    Optional(lit.GENERIC_ARGUMENTS),
+    Optional(lit.TYPE_ARGUMENTS),
     lit.ARGUMENT_LIST,
     LastOf(T.colon, lit.TYPE)
   ).tf(() => new ast.Method()),
@@ -65,28 +65,28 @@ export const
 
   INTERFACE_OR_CLASS = SequenceOf(
     Either(K.class, K.interface),
-    LastOf(T.id),
-    Optional(lit.GENERIC_ARGUMENTS),
+    T.id,
+    Optional(lit.TYPE_PARAMETERS),
     Optional(LastOf(K.extends, lit.TYPE)),
     Optional(LastOf(K.implements, List(lit.TYPE, T.comma))),
     LastOf(T.lbracket, ZeroOrMore(MEMBER)),
     T.rbracket
-  ).tf(([kind, id, gen, ext, impl, members]) => 
+  ).tf(([kind, id, param, ext, impl, members]) => 
     ((kind.text === 'interface' ? new ast.Interface() : new ast.Class()) as ast.Implementer)
       .set({
         name: id.text,
-        generic_arguments: gen || [],
+        type_parameters: param || [],
         extends: ext,
         implements: impl || [],
         members
       })
   ),
 
-
   TYPE = SequenceOf(
     LastOf(K.type, T.id),
+    Optional(lit.TYPE_PARAMETERS),
     LastOf(T.equal, lit.TYPE)
-  ).tf(([id, type]) => new ast.TypeDeclaration().set({name: id.text, type})),
+  ).tf(([id, gen, type]) => new ast.TypeDeclaration().set({name: id.text, type, type_parameters: gen || []})),
 
 
   NAMESPACE = SequenceOf(
@@ -99,6 +99,6 @@ export const
     VAR,
     FUNCTION,
     TYPE,
+    INTERFACE_OR_CLASS,
     NAMESPACE,
-    INTERFACE_OR_CLASS
   )

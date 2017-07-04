@@ -1,6 +1,10 @@
 
 export abstract class Node {
 
+  is<T extends Node>(kls: new (...a: any[]) => T): boolean {
+    return this.constructor === kls
+  }
+
   set(values: Partial<this>): this
   set<T extends keyof this>(prop: T, value: this[T]): this 
   set(values: any, single_val?: any) {
@@ -60,7 +64,7 @@ export class UnionType extends TypeLiteral {
 }
 
 export class FunctionLiteral extends TypeLiteral {
-  type_arguments: TypeLiteral[] = []
+  type_parameters: TypeParameter[] = []
   arguments: Argument[] = []
   return_type: TypeLiteral
 }
@@ -78,8 +82,13 @@ export class NamedType extends TypeLiteral {
 }
 
 export class TypeDeclaration extends Declaration {
-  name: string
   type: TypeLiteral
+  type_parameters: TypeParameter[] = []
+}
+
+export class TypeParameter extends Declaration {
+  default: TypeLiteral | null = null
+  extends: TypeLiteral | null = null
 }
 
 export class Argument extends Declaration {
@@ -116,7 +125,7 @@ export class MemberHolder extends Declaration {
 export class Implementer extends MemberHolder {
   extends: TypeLiteral | null = null
   implements: TypeLiteral[] = []
-  generic_arguments: TypeLiteral[] = []
+  type_parameters: TypeParameter[] = []
 }
 
 export class Interface extends Implementer { }

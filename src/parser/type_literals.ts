@@ -2,8 +2,8 @@
  * Type literals are types that use already declared types to build new ones.
  */
 
-import {LastOf, SequenceOf, List, Optional, Either, ZeroOrMore, Rule} from 'pegp'
-import {T} from './base'
+import {LastOf, FirstOf, SequenceOf, List, Optional, Either, ZeroOrMore, Rule} from 'pegp'
+import {T, K} from './base'
 
 import * as ast from './ast'
 
@@ -30,7 +30,19 @@ export const
     .tf(([lst]) => lst || []),
 
   ///////////////////////////////////////////////////
-  GENERIC_ARGUMENTS = SequenceOf(
+  TYPE_PARAMETER = SequenceOf(
+    T.id,
+    Optional(LastOf(K.extends, () => TYPE)),
+    Optional(LastOf(T.equal, () => TYPE))
+  ).tf(([id, ext, def]) => new ast.TypeParameter().set({name: id.text, extends: ext, default: def})),
+
+  TYPE_PARAMETERS = FirstOf(
+    LastOf(T.lt, List(TYPE_PARAMETER, T.comma)),
+    T.gt
+  ),
+
+  ///////////////////////////////////////////////////
+  TYPE_ARGUMENTS = SequenceOf(
     LastOf(T.lt, List(() => TYPE, T.comma)), 
     T.gt
   )
@@ -39,18 +51,18 @@ export const
 
   ///////////////////////////////////////////////////
   FUNCTION = SequenceOf(
-    Optional(GENERIC_ARGUMENTS), 
+    Optional(TYPE_PARAMETERS), 
     ARGUMENT_LIST, 
     LastOf(T.fat_arrow, () => TYPE)
   )
-                                  .tf(([type_arguments, args, return_type]) => new ast.FunctionLiteral().set({
-                                    type_arguments: type_arguments || [], arguments: args || [], return_type
+                                  .tf(([params, args, return_type]) => new ast.FunctionLiteral().set({
+                                    type_parameters: params || [], arguments: args || [], return_type
                                   })),
 
   ///////////////////////////////////////////////////
   NAMED = SequenceOf(
     T.id,
-    Optional(GENERIC_ARGUMENTS)
+    Optional(TYPE_ARGUMENTS)
   )                               .tf(([id, type_arguments]) =>
                                     new ast.NamedType().set({name: id.text, type_arguments})
                                   ),

@@ -1,5 +1,10 @@
 {
-  "name": "dts-tool",
+  "name": "dtstool",
+  "bin": {
+    "dtstool": "./lib/bin/dtstool.js"
+  },
+  "main": "./lib/src/index.js",
+  "typings": "./lib/src/index.d.ts",
   "devDependencies": {
     "@types/node": "^8.0.7"
   }
