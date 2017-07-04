@@ -55,24 +55,6 @@ export const
   ),
 
 
-  GLOBAL = SequenceOf(K.global),
-
-
-  MODULE_CONTENTS = ZeroOrMore(Either(
-    IMPORT,
-    EXPORT_DECLARATION,
-    GLOBAL
-  )),
-
-
-  // Inline module declaration in a file of modules
-  DECLARE_MODULE = SequenceOf(
-    MULTI_COMMENT,
-    LastOf(K.declare, K.module, T.id), // module name
-    LastOf(T.lbrace, MODULE_CONTENTS),
-    T.rbrace
-  ),
-
   DECLARE_GLOBAL = SequenceOf(
     LastOf(K.declare, K.global, T.lbrace, ZeroOrMore(decl.DECLARATION)),
     T.rbrace
@@ -95,6 +77,23 @@ export const
   ).tf(name_reference => new ast.ExportEquals().set({name_reference})),
 
 
+  MODULE_CONTENTS = ZeroOrMore(Either(
+    IMPORT,
+    EXPORT_DECLARATION,
+    EXPORT_AS_NAMESPACE,
+    EXPORT_EQUAL,
+    EXPORT_FROM
+  )),
+
+
+  // Inline module declaration in a file of modules
+  DECLARE_MODULE = SequenceOf(
+    MULTI_COMMENT,
+    LastOf(K.declare, K.module, T.string), // module name
+    LastOf(T.lbrace, MODULE_CONTENTS),
+    T.rbrace
+  ).tf(([doc, modname, contents]) => new ast.Module().set({doc: doc, name: modname.text, contents})),
+
   TOP_LEVEL = ZeroOrMore(Either(
     IMPORT,
     EXPORT_DECLARATION,
@@ -102,6 +101,8 @@ export const
     EXPORT_EQUAL,
     EXPORT_FROM,
     DECLARATION,
+    decl.DECLARATION,
     DECLARE_MODULE,
-    DECLARE_GLOBAL
+    DECLARE_GLOBAL,
+    decl.INTERFACE_OR_CLASS // it really is just interface
   ))

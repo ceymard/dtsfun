@@ -7,17 +7,19 @@ import {T, K, MULTI_COMMENT} from './base'
 
 import * as ast from './ast'
 
+export const fake_any = new ast.NamedType().set({name_reference: new ast.NameReference().set({reference: ['any']})})
+
 export const 
   ARGUMENT = SequenceOf(
     Optional(T.ellipsis), 
     T.id,
     Optional(T.interrogation),
-    LastOf(T.colon, () => TYPE)
+    Optional(LastOf(T.colon, () => TYPE))
   )
                                   .tf(([ellipsis, id, optional, type]) => 
                                     new ast.Argument().set({
                                       name: id.text, 
-                                      type, 
+                                      type: type || fake_any, 
                                       ellipsis: ellipsis != null, 
                                       optional: optional != null
                                   })),
@@ -57,7 +59,7 @@ export const
     ARGUMENT_LIST,
     Optional(LastOf(T.colon, () => TYPE))
   ).tf(([is_new, id, inte, type_parameters, args, return_type]) => 
-    new ast.Method().set({name: id ? id.text : '', is_new: !!is_new, type_parameters, return_type, is_optional: !!inte})
+    new ast.Method().set({name: id ? id.text : '', is_new: !!is_new, type_parameters, return_type: return_type || fake_any, is_optional: !!inte})
   ),
 
   DYNAMIC_PROPERTY = SequenceOf(

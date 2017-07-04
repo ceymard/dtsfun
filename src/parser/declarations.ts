@@ -33,13 +33,13 @@ export const
     LastOf(K.function, T.id),
     lit.TYPE_PARAMETERS,
     lit.ARGUMENT_LIST, 
-    LastOf(T.colon, lit.TYPE)
+    Optional(LastOf(T.colon, lit.TYPE))
   ).tf(([id, type_parameters, args, return_type]) => 
     new ast.Function().set({
       name: id.text, 
       type_parameters: type_parameters, 
       arguments: args || [], 
-      return_type
+      return_type: return_type || lit.fake_any
     })
   ),
 

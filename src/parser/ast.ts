@@ -29,7 +29,7 @@ export abstract class Declaration extends Node {
 }
 
 export class Module extends Declaration {
-  exports: Declaration[]
+  contents: Node[]
 }
 
 export class SingleImportExport extends Node {
