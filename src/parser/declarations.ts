@@ -72,14 +72,14 @@ export const
 
   NAMESPACE = SequenceOf(
     LastOf(K.namespace, T.id),
-    LastOf(T.lbracket, ZeroOrMore(() => DECLARATION)),
-    T.rbracket
+    LastOf(T.lbrace, ZeroOrMore(() => DECLARATION)),
+    T.rbrace
   ).tf(([id, decls]) => new ast.Namespace().set({name: id.text, declarations: decls})),
 
   DECLARATION: Rule<ast.Declaration> = Either(
+    NAMESPACE,
     VAR,
     FUNCTION,
     TYPE,
     INTERFACE_OR_CLASS,
-    NAMESPACE,
   )
