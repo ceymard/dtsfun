@@ -129,16 +129,20 @@ export const
     T.number.tf(num => new ast.NumberType().set({number: parseFloat(num.text)}))
   ) as Rule<ast.Type>,
 
-  ARRAY_TYPE = FirstOf(TYPE_BASE, SequenceOf(T.lbracket, T.rbracket))
-    .tf(type => new ast.ArrayOfType().set({type})),
-
-  INDEX_TYPE = SequenceOf(TYPE_BASE, LastOf(T.lbracket, () => TYPE), T.rbracket)
-    .tf(([type, index_type]) => new ast.IndexType().set({type, index_type})),
+  ARRAY_TYPE: Rule<ast.ArrayOfType> = SequenceOf(
+    TYPE_BASE, 
+    ZeroOrMore<ast.TypeModifier>(Either(
+      SequenceOf(T.lbracket, T.rbracket)
+                                  .tf(arg => new ast.ArrayOfType()), 
+      FirstOf(LastOf(T.lbracket, () => TYPE), T.rbracket)
+                                  .tf(index_type => new ast.IndexType().set({index_type}))
+    ))
+  )
+    .tf(([type, modifiers]) => modifiers.reduce((acc, mod) => mod.set({type: acc}), type)),
 
   TYPE: Rule<ast.Type> = List(
     Either(
       ARRAY_TYPE,
-      INDEX_TYPE,
       TYPE_BASE,
     ),
     T.pipe

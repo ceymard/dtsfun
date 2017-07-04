@@ -110,16 +110,15 @@ export class NumberType extends Type {
   number: number
 }
 
-export class KeyOfType extends Type {
+export class TypeModifier extends Type {
   type: Type
 }
 
-export class ArrayOfType extends Type {
-  type: Type
-}
+export class KeyOfType extends TypeModifier { }
 
-export class IndexType extends Type {
-  type: Type
+export class ArrayOfType extends TypeModifier { }
+
+export class IndexType extends TypeModifier {
   index_type: Type
 }
 
