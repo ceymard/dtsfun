@@ -36,10 +36,10 @@ export const
     Optional(LastOf(T.equal, () => TYPE))
   ).tf(([id, ext, def]) => new ast.TypeParameter().set({name: id.text, extends: ext, default: def})),
 
-  TYPE_PARAMETERS = FirstOf(
+  TYPE_PARAMETERS = Optional(FirstOf(
     LastOf(T.lt, List(TYPE_PARAMETER, T.comma)),
     T.gt
-  ),
+  )).tf(params => params ? params : [] as ast.TypeParameter[]),
 
   ///////////////////////////////////////////////////
   TYPE_ARGUMENTS = SequenceOf(
@@ -49,14 +49,52 @@ export const
                                   .tf(([types]) => types),
 
 
+  METHOD = SequenceOf(
+    Optional(K.new),
+    Optional(T.id), // The name is optional, as it could be a constructor
+    TYPE_PARAMETERS,
+    ARGUMENT_LIST,
+    Optional(LastOf(T.colon, () => TYPE))
+  ).tf(([is_new, id, type_parameters, args, return_type]) => 
+    new ast.Method().set({name: id ? id.text : '', is_new: !!is_new, type_parameters, return_type})
+  ),
+
+  DYNAMIC_PROPERTY = SequenceOf(
+    LastOf(T.lbracket, T.id),
+    Either(
+      LastOf(T.colon, () => TYPE),
+      LastOf(K.in, () => TYPE)
+    ),
+    LastOf(T.rbracket, Optional(T.interrogation)), 
+    LastOf(T.colon, () => TYPE)
+  ).tf(([id, key_type, opt, type]) => new ast.DynamicProperty().set({type, name: id.text, key_type, is_optional: !!opt})),
+
+  PROPERTY = SequenceOf(
+    Either(T.id, T.string),
+    Optional(T.interrogation),
+    LastOf(T.colon, () => TYPE)
+  ).tf(([id, opt, type]) => new ast.Property().set({name: id.text, is_optional: !!opt, type})),
+
+  MEMBER = SequenceOf(
+    Optional(K.static),
+    Optional(Either(K.public, K.private, K.protected)),
+    Optional(K.abstract),
+    Either(METHOD, PROPERTY, DYNAMIC_PROPERTY) as Rule<ast.Member>
+  ).tf(([stat, access, abs, member]) => member.set({is_static: !!stat, visibility: access ? access.text : '', is_abstract: !!abs})),
+
+  MEMBERS = FirstOf(
+    LastOf(T.lbrace, ZeroOrMore(MEMBER)),
+    T.rbrace
+  ),
+
   ///////////////////////////////////////////////////
   FUNCTION = SequenceOf(
-    Optional(TYPE_PARAMETERS), 
+    TYPE_PARAMETERS, 
     ARGUMENT_LIST, 
     LastOf(T.fat_arrow, () => TYPE)
   )
                                   .tf(([params, args, return_type]) => new ast.FunctionLiteral().set({
-                                    type_parameters: params || [], arguments: args || [], return_type
+                                    type_parameters: params, arguments: args || [], return_type
                                   })),
 
   ///////////////////////////////////////////////////
@@ -72,20 +110,31 @@ export const
     T.rbracket
   )                               .tf(([lst]) => new ast.TupleLiteral().set({types: lst})),
 
-  ///////////////////////////////////////////////////
-  TYPE: Rule<ast.TypeLiteral> = List(
-    Either(
-      SequenceOf(
-        Either(
-          FUNCTION,
-          TUPLE,
-          NAMED,
-        ) as Rule<ast.TypeLiteral>,
-        ZeroOrMore(SequenceOf(T.lbracket, T.rbracket))
-      )                           .tf(([type, array_number]) => type.set({array_number: array_number.length})),
+  OBJECT_LITERAL = MEMBERS.tf((members) => new ast.ObjectLiteral().set({members})),
 
-      SequenceOf(T.lparen, () => TYPE, T.rparen)
-                                  .tf(([lp, type, rp]) => type)
+  ///////////////////////////////////////////////////
+  TYPE_BASE = Either(
+    FirstOf(LastOf(T.lparen, () => TYPE), T.rparen),
+    LastOf(K.keyof, () => TYPE).tf(type => new ast.KeyOfType().set({type})),
+    FUNCTION,
+    TUPLE,
+    NAMED,
+    OBJECT_LITERAL,
+    T.string.tf(str => new ast.StringType().set({string: str.text})),
+    T.number.tf(num => new ast.NumberType().set({number: parseFloat(num.text)}))
+  ) as Rule<ast.Type>,
+
+  ARRAY_TYPE = FirstOf(TYPE_BASE, SequenceOf(T.lbracket, T.rbracket))
+    .tf(type => new ast.ArrayOfType().set({type})),
+
+  INDEX_TYPE = SequenceOf(TYPE_BASE, LastOf(T.lbracket, () => TYPE), T.rbracket)
+    .tf(([type, index_type]) => new ast.IndexType().set({type, index_type})),
+
+  TYPE: Rule<ast.Type> = List(
+    Either(
+      ARRAY_TYPE,
+      INDEX_TYPE,
+      TYPE_BASE,
     ),
     T.pipe
   )

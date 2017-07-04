@@ -56,6 +56,7 @@ export const K = {
 
   module: kw('module'),
 
+  abstract: kw('abstract'),
   public: kw('public'),
   private: kw('private'),
   protected: kw('protected'),
@@ -73,6 +74,9 @@ export const K = {
   const: kw('const'),
   var: kw('var'),
   let: kw('let'),
+  in: kw('in'),
+  of: kw('of'),
+  keyof: kw('keyof')
 }
 
 

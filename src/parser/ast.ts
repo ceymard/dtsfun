@@ -51,71 +51,103 @@ export class ExportList extends ImportList {
 
 export class Variable extends Declaration {
   kind: string
-  type: TypeLiteral // a reference to 
+  type: Type // a reference to 
 }
 
 
-export class TypeLiteral extends Node {
-  array_number: number
+export class Type extends Node {
+
 }
 
-export class UnionType extends TypeLiteral {
-  types: TypeLiteral[]
+export class UnionType extends Type {
+  types: Type[]
 }
 
-export class FunctionLiteral extends TypeLiteral {
+export class FunctionLiteral extends Type {
   type_parameters: TypeParameter[] = []
   arguments: Argument[] = []
-  return_type: TypeLiteral
+  return_type: Type
 }
 
-export class TupleLiteral extends TypeLiteral {
-  types: TypeLiteral[] = []
+export class TupleLiteral extends Type {
+  types: Type[] = []
+}
+
+export class ObjectLiteral extends Type {
+  members: Member[] = []
 }
 
 /**
  * A reference to a type. Will have to be resolved later.
  */
-export class NamedType extends TypeLiteral {
+export class NamedType extends Type {
   name: string
-  type_arguments: TypeLiteral[] | null = null
+  type_arguments: Type[] | null = null
+}
+
+export class StringType extends Type {
+  string: string
+}
+
+export class NumberType extends Type {
+  number: number
+}
+
+export class KeyOfType extends Type {
+  type: Type
+}
+
+export class ArrayOfType extends Type {
+  type: Type
+}
+
+export class IndexType extends Type {
+  type: Type
+  index_type: Type
 }
 
 export class TypeDeclaration extends Declaration {
-  type: TypeLiteral
+  type: Type
   type_parameters: TypeParameter[] = []
 }
 
 export class TypeParameter extends Declaration {
-  default: TypeLiteral | null = null
-  extends: TypeLiteral | null = null
+  default: Type | null = null
+  extends: Type | null = null
 }
 
 export class Argument extends Declaration {
-  type: TypeLiteral
+  type: Type
   ellipsis: boolean
   optional: boolean
 }
 
 export class Function extends Declaration {
-  type_arguments: TypeLiteral[] = []
+  type_parameters: TypeParameter[] = []
   arguments: Argument[] = []
-  return_type: TypeLiteral
+  return_type: Type | null
 }
 
 export class Member extends Declaration {
-  is_static: boolean
+  is_abstract: boolean = false
+  is_static: boolean = false
+  is_optional: boolean = false
   visibility: string // public, private or protected
 }
 
 export class Property extends Member {
-  type: TypeLiteral
+  type: Type
+}
+
+export class DynamicProperty extends Property {
+  key_type: Type
 }
 
 export class Method extends Member implements Function {
-  type_arguments: TypeLiteral[] = []
+  is_new = false
+  type_parameters: TypeParameter[] = []
   arguments: Argument[] = []
-  return_type: TypeLiteral
+  return_type: Type | null = null
 }
 
 export class MemberHolder extends Declaration {
@@ -123,8 +155,9 @@ export class MemberHolder extends Declaration {
 }
 
 export class Implementer extends MemberHolder {
-  extends: TypeLiteral | null = null
-  implements: TypeLiteral[] = []
+  is_abstract: boolean = false
+  extends: Type | null = null
+  implements: Type[] = []
   type_parameters: TypeParameter[] = []
 }
 

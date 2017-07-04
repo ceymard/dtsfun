@@ -68,6 +68,7 @@ export const
     T.rbrace
   ).tf(([decls]) => new ast.GlobalAugmentations().set({declarations: decls})),
 
+
   TOP_LEVEL = ZeroOrMore(Either(
     IMPORT,
     EXPORT_DECLARATION,
