@@ -1,10 +1,10 @@
 
-import {TokenList, Optional} from 'pegp'
+import {TokenList, Optional, TokenRule, Lexeme, Rule} from 'pegp'
 
-const tl = new TokenList()
+export const tl = new TokenList()
 
 export const T = {
-  space: tl.skip(/[\n\s\t\r ]+/),
+  space: tl.skip(/[\n\s\t\r ]+/) as TokenRule,
   // single comment.
   comment: tl.skip(/\/\/[^\n]*\n/),
   // we skip semi colons since they're not significant
@@ -41,7 +41,7 @@ export const T = {
  * Keywords taken from the t_id rule for shorter declarations.
  */
 export const K = {
-  global: T.id.as('global'),
+  global: T.id.as('global') as Rule<Lexeme>,
   export: T.id.as('export'),
   import: T.id.as('import'),
   from: T.id.as('from'),

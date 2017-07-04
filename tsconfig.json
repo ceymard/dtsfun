@@ -10,7 +10,6 @@
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "noImplicitThis": true,
-        "noUnusedLocals": true,
         "outDir": "./build",
         "lib": ["es6"]
     },

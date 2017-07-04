@@ -1,52 +1,42 @@
 
-export interface Accessor<T, This> {
-  (): T | null
-  (arg: T | null): This
-}
-
-// function a(def: any): (target: Declaration, name: string) => void
-function a(target: any, name?: string) {
-
-  if (arguments.length > 1) return wrapped(target, name!)
-
-  function wrapped(target: any, name: string, value = null) {
-    target['_' + name] = value
-    target[name] = function (this: any, arg?: any) {
-      if (arguments.length > 0) {
-        this['_' + name] = arg
-        return this
-      } else {
-        return this['_' + name]
-      }
-    }
-  }
-}
-
 export abstract class Node {
+
+  set(values: Partial<this>): this
+  set<T extends keyof this>(prop: T, value: this[T]): this 
+  set(values: any, single_val?: any) {
+    var _this: any = this
+    if (arguments.length === 1) {
+      for (var x in values)
+        _this[x] = values[x]
+    } else {
+      _this[values] = single_val
+    }
+    return this
+  }
 
 }
 
 export abstract class Declaration extends Node {
 
-  @a doc: Accessor<string, this>
-  @a name: Accessor<string, this>
-  @a is_export: Accessor<boolean, this>
+  doc: string
+  name: string
+  is_export: boolean
 
 }
 
 export class Module extends Declaration {
-  @a exports: Accessor<Declaration[], this>
+  exports: Declaration[]
 }
 
 export class SingleImportExport extends Node {
-  @a name: Accessor<string, this>
-  @a 'as': Accessor<string, this>
+  name: string
+  'as': string
 }
 
 export class ImportList extends Node {
-  @a imports: Accessor<SingleImportExport[], this>
-  @a from_module: Accessor<string, this>
-  // @a module: Accessor<Module, this>
+  imports: SingleImportExport[]
+  from_module: string
+  // module: Module
 
   kind = 'import'
 }
@@ -56,23 +46,23 @@ export class ExportList extends ImportList {
 }
 
 export class Variable extends Declaration {
-  @a kind: Accessor<string, this>
-  @a type: Accessor<TypeLiteral, this> // a reference to a type.
+  kind: string
+  type: TypeLiteral // a reference to 
 }
 
 
 export class TypeLiteral extends Node {
-  @a array_number: Accessor<number, this>
+  array_number: number
 }
 
 export class UnionType extends TypeLiteral {
-  @a types: Accessor<TypeLiteral[], this>
+  types: TypeLiteral[]
 }
 
 export class FunctionLiteral extends TypeLiteral {
-  @a type_arguments: Accessor<TypeLiteral[], this>
-  @a arguments: Accessor<Argument[], this>
-  @a return_type: Accessor<TypeLiteral, this>
+  type_arguments: TypeLiteral[] | null = null
+  arguments: Argument[] | null = null
+  return_type: TypeLiteral
 }
 
 
@@ -80,8 +70,8 @@ export class FunctionLiteral extends TypeLiteral {
  * A reference to a type. Will have to be resolved later.
  */
 export class NamedType extends TypeLiteral {
-  @a name: Accessor<string, this>
-  @a type_arguments: Accessor<TypeLiteral[], this>
+  name: string
+  type_arguments: TypeLiteral[] | null = null
 }
 
 export class TypeDeclaration extends Declaration {
@@ -97,23 +87,23 @@ export class Interface extends TypeDeclaration {
 }
 
 export class Argument extends Declaration {
-  @a type: Accessor<TypeLiteral, this>
-  @a ellipsis: Accessor<boolean, this>
-  @a optional: Accessor<boolean, this>
+  type: TypeLiteral
+  ellipsis: boolean
+  optional: boolean
 }
 
 export class Function extends Declaration {
-  @a type_arguments: Accessor<TypeLiteral[], this>
-  @a arguments: Accessor<Argument[], this>
-  @a return_type: Accessor<TypeLiteral, this>
+  type_arguments: TypeLiteral[] = []
+  arguments: Argument[] = []
+  return_type: TypeLiteral
 }
 
 export class GlobalAugmentations extends Node {
-  @a augmentations: Accessor<Declaration[], this>
+  augmentations: Declaration[]
 }
 
 
 export class SourceFile extends Node {
-  @a path: Accessor<string, this>
-  @a declarations: Accessor<Declaration[], this>
+  path: string
+  declarations: Declaration[]
 }
