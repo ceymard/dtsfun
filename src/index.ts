@@ -1,11 +1,12 @@
 
 import {
-  Language, LanguageRule
+  Language, LanguageRule, Lexeme
 } from 'pegp'
 
 import * as ast from './parser/ast'
 
 export * from './parser/ast'
+export * from './visitor'
 
 import {tl} from './parser/base'
 import {TOP_LEVEL} from './parser/module'

@@ -52,11 +52,12 @@ export const
   METHOD = SequenceOf(
     Optional(K.new),
     Optional(T.id), // The name is optional, as it could be a constructor
+    Optional(T.interrogation),
     TYPE_PARAMETERS,
     ARGUMENT_LIST,
     Optional(LastOf(T.colon, () => TYPE))
-  ).tf(([is_new, id, type_parameters, args, return_type]) => 
-    new ast.Method().set({name: id ? id.text : '', is_new: !!is_new, type_parameters, return_type})
+  ).tf(([is_new, id, inte, type_parameters, args, return_type]) => 
+    new ast.Method().set({name: id ? id.text : '', is_new: !!is_new, type_parameters, return_type, is_optional: !!inte})
   ),
 
   DYNAMIC_PROPERTY = SequenceOf(
@@ -99,14 +100,14 @@ export const
                                     type_parameters: params, arguments: args || [], return_type, is_new: !!is_new
                                   })),
 
-  DOTTED_NAME = List(T.id.tf(id => id.text), T.dot),
+  DOTTED_NAME = List(T.id.tf(id => id.text), T.dot).tf(names => new ast.NameReference().set({reference: names})),
 
   ///////////////////////////////////////////////////
   NAMED = SequenceOf(
     DOTTED_NAME,
     Optional(TYPE_ARGUMENTS)
   )                               .tf(([name, type_arguments]) =>
-                                    new ast.NamedType().set({name, type_arguments})
+                                    new ast.NamedType().set({name_reference: name, type_arguments})
                                   ),
 
   TUPLE = SequenceOf(

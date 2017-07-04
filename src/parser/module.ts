@@ -2,6 +2,7 @@
 import {FirstOf, LastOf, SequenceOf, Optional, Either, List, ZeroOrMore, Rule, Lexeme, SequenceRule, ZeroOrMoreRule} from 'pegp'
 import {K, T, MULTI_COMMENT} from './base'
 import * as decl from './declarations'
+import * as lit from './type_literals'
 import * as ast from './ast'
 
 export const
@@ -65,7 +66,7 @@ export const
 
 
   // Inline module declaration in a file of modules
-  MODULE = SequenceOf(
+  DECLARE_MODULE = SequenceOf(
     MULTI_COMMENT,
     LastOf(K.declare, K.module, T.id), // module name
     LastOf(T.lbrace, MODULE_CONTENTS),
@@ -78,10 +79,29 @@ export const
   ).tf(([decls]) => new ast.GlobalAugmentations().set({declarations: decls})),
 
 
+  DECLARATION = LastOf(
+    K.declare,
+    decl.DECLARATION
+  ),
+
+  EXPORT_AS_NAMESPACE = LastOf(
+    K.export, K.as, K.namespace, lit.DOTTED_NAME
+  ).tf(name_reference => new ast.ExportAsNamespace().set({name_reference})),
+
+  EXPORT_EQUAL = LastOf(
+    K.export,
+    T.equal,
+    lit.DOTTED_NAME
+  ).tf(name_reference => new ast.ExportEquals().set({name_reference})),
+
+
   TOP_LEVEL = ZeroOrMore(Either(
     IMPORT,
     EXPORT_DECLARATION,
+    EXPORT_AS_NAMESPACE,
+    EXPORT_EQUAL,
     EXPORT_FROM,
-    MODULE,
+    DECLARATION,
+    DECLARE_MODULE,
     DECLARE_GLOBAL
   ))

@@ -53,9 +53,21 @@ export class ExportList extends ImportList {
 
 }
 
+export class ExportAsNamespace extends Node {
+  name_reference: NameReference
+}
+
+export class ExportEquals extends Node {
+  name_reference: NameReference
+}
+
 export class Variable extends Declaration {
   kind: string
   type: Type // a reference to 
+}
+
+export class NameReference extends Node {
+  reference: string[]
 }
 
 
@@ -86,7 +98,7 @@ export class ObjectLiteral extends Type {
  * A reference to a type. Will have to be resolved later.
  */
 export class NamedType extends Type {
-  name: string[] // Named types have potentially qualified names
+  name_reference: NameReference // Named types have potentially qualified names
   type_arguments: Type[] | null = null
 }
 
