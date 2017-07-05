@@ -61,7 +61,8 @@ export class ExportEquals extends Node {
 
 export class Variable extends Declaration {
   kind: string
-  type: Type // a reference to 
+  type: Type | null = null // a reference to 
+  value: string | number | NameReference | null = null // this is optional
 }
 
 export class NameReference extends Node {
@@ -120,6 +121,7 @@ export class TypeModifier extends Type {
   type: Type
 }
 
+
 export class KeyOfType extends TypeModifier { }
 
 export class ArrayOfType extends TypeModifier { }
@@ -133,13 +135,24 @@ export class TypeDeclaration extends Declaration {
   type_parameters: TypeParameter[] = []
 }
 
+export class Enum extends TypeDeclaration {
+  is_const = false
+  members: EnumMember[] = []
+}
+
+export class EnumMember extends Declaration {
+  name: string
+  value: string | number | null = null
+}
+
+
 export class TypeParameter extends Declaration {
   default: Type | null = null
   extends: Type | null = null
 }
 
 export class Argument extends Declaration {
-  type: Type
+  type: Type | null = null
   ellipsis: boolean
   optional: boolean
 }
@@ -147,7 +160,7 @@ export class Argument extends Declaration {
 export class Function extends Declaration {
   type_parameters: TypeParameter[] = []
   arguments: Argument[] = []
-  return_type: Type | null
+  return_type: Type | null = null
 }
 
 export class Member extends Declaration {
@@ -159,7 +172,7 @@ export class Member extends Declaration {
 }
 
 export class Property extends Member {
-  type: Type
+  type: Type | null = null
 }
 
 export class DynamicProperty extends Property {
@@ -179,7 +192,7 @@ export class MemberHolder extends Declaration {
 
 export class Implementer extends MemberHolder {
   is_abstract: boolean = false
-  extends: Type | null = null
+  extends: Type[] = []
   implements: Type[] = []
   type_parameters: TypeParameter[] = []
 }

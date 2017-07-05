@@ -19,12 +19,18 @@ export const
   VAR = SequenceOf(
     Either(K.const, K.let, K.var), 
     T.id, 
-    LastOf(T.colon, lit.TYPE)
-  ).tf(([kind, id, type]) => 
+    Optional(LastOf(T.colon, lit.TYPE)),
+    Optional(LastOf(T.equal, Either(
+      T.string.tf(val => val.text), 
+      T.number.tf(val => parseFloat(val.text)),
+      lit.DOTTED_NAME
+    )))
+  ).tf(([kind, id, type, value]) => 
     new ast.Variable().set({
       kind: kind.text,
       name: id.text,
-      type
+      type: type,
+      value
     })
   ),
 
@@ -39,7 +45,7 @@ export const
       name: id.text, 
       type_parameters: type_parameters, 
       arguments: args || [], 
-      return_type: return_type || lit.fake_any
+      return_type
     })
   ),
 
@@ -48,7 +54,7 @@ export const
     Either(K.class, K.interface),
     T.id,
     lit.TYPE_PARAMETERS,
-    Optional(LastOf(K.extends, lit.TYPE)),
+    Optional(LastOf(K.extends, List(lit.TYPE, T.comma))),
     Optional(LastOf(K.implements, List(lit.TYPE, T.comma))),
     lit.MEMBERS
   ).tf(([abs, kind, id, param, ext, impl, members]) => 
@@ -57,11 +63,24 @@ export const
         name: id.text,
         is_abstract: !!abs,
         type_parameters: param,
-        extends: ext,
+        extends: ext || [],
         implements: impl || [],
         members
       })
   ),
+
+  ///////////////////////////////////////////////////
+  ENUM_MEMBER = SequenceOf(
+    T.id,
+    Optional(LastOf(T.equal, Either(T.string.tf(val => val.text), T.number.tf(val => parseFloat(val.text)))))
+  ).tf(([id, value]) => new ast.EnumMember().set({name: id.text, value: value})),
+
+  ENUM = SequenceOf(
+    Optional(K.const),
+    LastOf(K.enum, T.id),
+    LastOf(T.lbrace, List(ENUM_MEMBER, T.comma)),
+    Optional(T.comma), T.rbrace  
+  ).tf(([cnst, id, members]) => new ast.Enum().set({is_const: !!cnst, members, name: id.text})),
 
   TYPE = SequenceOf(
     LastOf(K.type, T.id),
@@ -79,6 +98,7 @@ export const
   DECLARATION: Rule<ast.Declaration> = HasDoc(
     Either(
       NAMESPACE,
+      ENUM,
       VAR,
       FUNCTION,
       TYPE,

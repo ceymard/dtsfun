@@ -74,6 +74,7 @@ export const K = {
   typeof: kw('typeof'),
   function: kw('function'),
   interface: kw('interface'),
+  enum: kw('enum'),
   class: kw('class'),
   namespace: kw('namespace'),
 

@@ -7,8 +7,6 @@ import {T, K, HasDoc} from './base'
 
 import * as ast from './ast'
 
-export const fake_any = new ast.NamedType().set({name_reference: new ast.NameReference().set({reference: ['any']})})
-
 export const 
   ARGUMENT = SequenceOf(
     Optional(T.ellipsis), 
@@ -19,7 +17,7 @@ export const
                                   .tf(([ellipsis, id, optional, type]) => 
                                     new ast.Argument().set({
                                       name: id.text, 
-                                      type: type || fake_any, 
+                                      type, 
                                       ellipsis: ellipsis != null, 
                                       optional: optional != null
                                   })),
@@ -59,7 +57,7 @@ export const
     ARGUMENT_LIST,
     Optional(LastOf(T.colon, () => TYPE))
   ).tf(([is_new, id, inte, type_parameters, args, return_type]) => 
-    new ast.Method().set({name: id ? id.text : '', is_new: !!is_new, type_parameters, return_type: return_type || fake_any, is_optional: !!inte})
+    new ast.Method().set({name: id ? id.text : '', is_new: !!is_new, type_parameters, return_type, is_optional: !!inte})
   ),
 
   DYNAMIC_PROPERTY = SequenceOf(
@@ -69,13 +67,13 @@ export const
       LastOf(K.in, () => TYPE)
     ),
     LastOf(T.rbracket, Optional(T.interrogation)), 
-    LastOf(T.colon, () => TYPE)
+    Optional(LastOf(T.colon, () => TYPE))
   ).tf(([id, key_type, opt, type]) => new ast.DynamicProperty().set({type, name: id.text, key_type, is_optional: !!opt})),
 
   PROPERTY = SequenceOf(
     Either(T.id, T.string, T.number),
     Optional(T.interrogation),
-    LastOf(T.colon, () => TYPE)
+    Optional(LastOf(T.colon, () => TYPE))
   ).tf(([id, opt, type]) => new ast.Property().set({name: id.text, is_optional: !!opt, type})),
 
   MEMBER = HasDoc(
