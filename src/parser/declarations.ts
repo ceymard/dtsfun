@@ -93,7 +93,7 @@ export const
     LastOf(K.namespace, T.id),
     LastOf(T.lbrace, ZeroOrMore(() => DECLARATION)),
     T.rbrace
-  ).tf(([id, decls]) => new ast.Namespace().set({name: id.text, declarations: decls})),
+  ).tf(([name, decls]) => new ast.Namespace().set({name: name.text, declarations: decls})),
 
   DECLARATION: Rule<ast.Declaration> = HasDoc(
     SequenceOf(

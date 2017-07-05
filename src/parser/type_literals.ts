@@ -68,7 +68,7 @@ export const
     ),
     LastOf(T.rbracket, Optional(T.interrogation)), 
     Optional(LastOf(T.colon, () => TYPE))
-  ).tf(([id, key_type, opt, type]) => new ast.DynamicProperty().set({type, name: id.text, key_type, is_optional: !!opt})),
+  ).tf(([id, key_type, opt, type]) => new ast.IndexProperty().set({type, name: id.text, key_type, is_optional: !!opt})),
 
   PROPERTY = SequenceOf(
     Either(T.id, T.string, T.number),

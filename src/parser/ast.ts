@@ -20,6 +20,10 @@ export abstract class Node {
 
 }
 
+export class Reference extends Node {
+  module_path: string
+}
+
 export abstract class Declaration extends Node {
   doc: string
   name: string
@@ -166,6 +170,7 @@ export class Function extends Declaration {
   type_parameters: TypeParameter[] = []
   arguments: Argument[] = []
   return_type: Type | null = null
+  is_generator = false
 }
 
 export class Member extends Declaration {
@@ -180,7 +185,7 @@ export class Property extends Member {
   type: Type | null = null
 }
 
-export class DynamicProperty extends Property {
+export class IndexProperty extends Property {
   key_type: Type
 }
 
@@ -189,6 +194,7 @@ export class Method extends Member implements Function {
   type_parameters: TypeParameter[] = []
   arguments: Argument[] = []
   return_type: Type | null = null
+  is_generator = false
 }
 
 export class MemberHolder extends Declaration {
@@ -216,7 +222,7 @@ export class GlobalAugmentations extends DeclarationHolder {
 
 
 export class Namespace extends DeclarationHolder {
-  name: string
+
 }
 
 

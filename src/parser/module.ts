@@ -83,6 +83,7 @@ export const
 
 
   TOP_LEVEL = ZeroOrMore(Either(
+    T.reference.tf(ref_name => new ast.Reference().set({module_path: ref_name.match[1]})),
     IMPORT,
     EXPORT_AS_NAMESPACE,
     EXPORT_EQUAL,

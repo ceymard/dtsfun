@@ -6,7 +6,8 @@ import * as ast from './ast'
 
 export const T = {
   // single comment.
-  comment: tl.skip(/\/\/[^\n]*\n/),
+  reference: tl.add(/\/\/\/\s+<reference path="([^"]*)" \/>\s*$\n?/m),
+  comment: tl.skip(/\/\/[^\n]*$\n?/m),
   multi_comment: tl.skip(/\/\*((?!\*\/).|\n|\r)*\*\//m),
   space: tl.skip(/[\n\s\t\r ]+/) as TokenRule,
   semi: tl.skip(';'),
