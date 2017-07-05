@@ -96,12 +96,16 @@ export const
   ).tf(([id, decls]) => new ast.Namespace().set({name: id.text, declarations: decls})),
 
   DECLARATION: Rule<ast.Declaration> = HasDoc(
-    Either(
-      NAMESPACE,
-      ENUM,
-      VAR,
-      FUNCTION,
-      TYPE,
-      INTERFACE_OR_CLASS,
-    ) as Rule<ast.Declaration>,
+    SequenceOf(
+      Optional(K.export),
+      Optional(K.declare),
+      Either(
+        NAMESPACE,
+        ENUM,
+        VAR,
+        FUNCTION,
+        TYPE,
+        INTERFACE_OR_CLASS,
+      ) as Rule<ast.Declaration>,
+    ).tf(([exp, dec, decl]) => decl.set({is_export: !!exp, is_declare: !!dec}))
   )

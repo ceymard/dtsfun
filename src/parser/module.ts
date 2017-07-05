@@ -14,12 +14,6 @@ export const
                                   new ast.SingleImportExport().set({name: id.text, as: as_id ? as_id.text : ''})
                                 ),
 
-  EXPORT_DECLARATION = HasDoc(
-    LastOf(K.export, Optional(K.declare), decl.DECLARATION) // we have to type it because Partial<> doesn't do well with union types.
-      .tf(decl => decl.set({is_export: true}))
-  ),
-
-
   FROM_CLAUSE = SequenceOf(K.from, T.string).tf(([k, str]) => str.text),
 
 
@@ -60,12 +54,6 @@ export const
     T.rbrace
   ).tf(([decls]) => new ast.GlobalAugmentations().set({declarations: decls})),
 
-
-  DECLARATION = LastOf(
-    K.declare,
-    decl.DECLARATION
-  ),
-
   EXPORT_AS_NAMESPACE = LastOf(
     K.export, K.as, K.namespace, lit.DOTTED_NAME
   ).tf(name_reference => new ast.ExportAsNamespace().set({name_reference})),
@@ -79,29 +67,27 @@ export const
 
   MODULE_CONTENTS = ZeroOrMore(Either(
     IMPORT,
-    EXPORT_DECLARATION,
     EXPORT_AS_NAMESPACE,
     EXPORT_EQUAL,
-    EXPORT_FROM
+    EXPORT_FROM,
+    decl.DECLARATION
   )),
 
 
   // Inline module declaration in a file of modules
   DECLARE_MODULE = HasDoc(SequenceOf(
-    LastOf(K.declare, K.module, T.string), // module name
+    LastOf(K.declare, K.module, Either(T.string, T.id)), // module name
     LastOf(T.lbrace, MODULE_CONTENTS),
     T.rbrace
   ).tf(([modname, contents]) => new ast.Module().set({name: modname.text, contents}))),
 
+
   TOP_LEVEL = ZeroOrMore(Either(
     IMPORT,
-    EXPORT_DECLARATION,
     EXPORT_AS_NAMESPACE,
     EXPORT_EQUAL,
     EXPORT_FROM,
-    DECLARATION,
     decl.DECLARATION,
     DECLARE_MODULE,
-    DECLARE_GLOBAL,
-    decl.INTERFACE_OR_CLASS // it really is just interface
+    DECLARE_GLOBAL
   ))
