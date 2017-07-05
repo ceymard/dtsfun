@@ -85,7 +85,8 @@ export const
   PROPERTY = SequenceOf(
     Either(PROPERTY_NAME, T.string.tf(s => s.text), T.number.tf(n => n.text)),
     Optional(T.interrogation),
-    Optional(LastOf(T.colon, () => TYPE))
+    Optional(LastOf(T.colon, () => TYPE)),
+    Optional(T.comma)
   ).tf(([name, opt, type]) => new ast.Property().set({name, is_optional: !!opt, type})),
 
   MEMBER_FINAL = Either(METHOD, PROPERTY, DYNAMIC_PROPERTY) as Rule<ast.Member>,
