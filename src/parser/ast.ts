@@ -81,6 +81,10 @@ export class IntersectionType extends Type {
   types: Type[]
 }
 
+export class TypeOf extends Type {
+  type: Type
+}
+
 export class FunctionLiteral extends Type {
   is_new = false
   type_parameters: TypeParameter[] = []
@@ -150,6 +154,7 @@ export class Member extends Declaration {
   is_abstract: boolean = false
   is_static: boolean = false
   is_optional: boolean = false
+  is_readonly: boolean = false
   visibility: string // public, private or protected
 }
 

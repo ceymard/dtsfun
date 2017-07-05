@@ -80,11 +80,19 @@ export const
 
   MEMBER = HasDoc(
     SequenceOf(
-      Optional(K.static),
       Optional(Either(K.public, K.private, K.protected)),
+      Optional(K.static),
       Optional(K.abstract),
+      Optional(K.readonly),
       Either(METHOD, PROPERTY, DYNAMIC_PROPERTY) as Rule<ast.Member>
-    ).tf(([stat, access, abs, member]) => member.set({is_static: !!stat, visibility: access ? access.text : '', is_abstract: !!abs}))
+    )
+      .tf(([access, stat, abs, read, member]) => 
+        member.set({
+          is_static: !!stat, 
+          visibility: access ? access.text : '', 
+          is_abstract: !!abs, 
+          is_readonly: !!read
+        }))
   ),
 
   MEMBERS = FirstOf(
@@ -124,6 +132,7 @@ export const
   TYPE_BASE = Either(
     FirstOf(LastOf(T.lparen, () => TYPE), T.rparen),
     LastOf(K.keyof, () => TYPE).tf(type => new ast.KeyOfType().set({type})),
+    LastOf(K.typeof, () => TYPE).tf(type => new ast.TypeOf().set({type})),
     FUNCTION,
     TUPLE,
     NAMED,

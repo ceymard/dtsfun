@@ -59,6 +59,7 @@ export const K = {
 
   module: kw('module'),
 
+  readonly: kw('readonly'),
   abstract: kw('abstract'),
   public: kw('public'),
   private: kw('private'),
@@ -69,6 +70,8 @@ export const K = {
   implements: kw('implements'),
 
   type: kw('type'),
+  keyof: kw('keyof'),
+  typeof: kw('typeof'),
   function: kw('function'),
   interface: kw('interface'),
   class: kw('class'),
@@ -79,7 +82,6 @@ export const K = {
   let: kw('let'),
   in: kw('in'),
   of: kw('of'),
-  keyof: kw('keyof')
 }
 
    
