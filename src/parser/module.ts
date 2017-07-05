@@ -65,6 +65,12 @@ export const
   ).tf(name_reference => new ast.ExportEquals().set({name_reference})),
 
 
+  IMPORT_EQUAL = SequenceOf(
+    LastOf(K.import, T.id),
+    LastOf(T.equal, lit.DOTTED_NAME)
+  ).tf(([name, name_reference]) => new ast.ImportEquals().set({name: name.text, name_reference})),
+
+
   MODULE_CONTENTS = ZeroOrMore(Either(
     IMPORT,
     EXPORT_AS_NAMESPACE,
@@ -84,6 +90,7 @@ export const
 
   TOP_LEVEL = ZeroOrMore(Either(
     T.reference.tf(ref_name => new ast.Reference().set({module_path: ref_name.match[1]})),
+    IMPORT_EQUAL,
     IMPORT,
     EXPORT_AS_NAMESPACE,
     EXPORT_EQUAL,

@@ -90,10 +90,10 @@ export const
 
 
   NAMESPACE = SequenceOf(
-    LastOf(K.namespace, T.id),
+    LastOf(K.namespace, lit.DOTTED_NAME.tf(n => n.reference.join(''))),
     LastOf(T.lbrace, ZeroOrMore(() => DECLARATION)),
     T.rbrace
-  ).tf(([name, decls]) => new ast.Namespace().set({name: name.text, declarations: decls})),
+  ).tf(([name, decls]) => new ast.Namespace().set({name, declarations: decls})),
 
   DECLARATION: Rule<ast.Declaration> = HasDoc(
     SequenceOf(

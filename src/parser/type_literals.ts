@@ -8,6 +8,11 @@ import {T, K, HasDoc} from './base'
 import * as ast from './ast'
 
 export const 
+
+
+  DOTTED_NAME = List(T.id.tf(id => id.text), T.dot).tf(names => new ast.NameReference().set({reference: names})),
+
+
   ARGUMENT = SequenceOf(
     Optional(T.ellipsis), 
     T.id,
@@ -48,16 +53,23 @@ export const
   )
                                   .tf(([types]) => types),
 
+  PROPERTY_NAME = Either(
+    FirstOf(
+      LastOf(T.lbracket, DOTTED_NAME.tf(dot => `[${dot.reference.join('')}]`)), 
+      T.rbracket
+    ),
+    T.id.tf(l => l.text)
+  ),
 
   METHOD = SequenceOf(
     Optional(K.new),
-    Optional(T.id), // The name is optional, as it could be a constructor
+    Optional(PROPERTY_NAME), // The name is optional, as it could be a constructor
     Optional(T.interrogation),
     TYPE_PARAMETERS,
     ARGUMENT_LIST,
     Optional(LastOf(T.colon, () => TYPE))
   ).tf(([is_new, id, inte, type_parameters, args, return_type]) => 
-    new ast.Method().set({name: id ? id.text : '', is_new: !!is_new, type_parameters, return_type, is_optional: !!inte})
+    new ast.Method().set({name: id ? id : '', is_new: !!is_new, type_parameters, return_type, is_optional: !!inte})
   ),
 
   DYNAMIC_PROPERTY = SequenceOf(
@@ -71,10 +83,10 @@ export const
   ).tf(([id, key_type, opt, type]) => new ast.IndexProperty().set({type, name: id.text, key_type, is_optional: !!opt})),
 
   PROPERTY = SequenceOf(
-    Either(T.id, T.string, T.number),
+    Either(PROPERTY_NAME, T.string.tf(s => s.text), T.number.tf(n => n.text)),
     Optional(T.interrogation),
     Optional(LastOf(T.colon, () => TYPE))
-  ).tf(([id, opt, type]) => new ast.Property().set({name: id.text, is_optional: !!opt, type})),
+  ).tf(([name, opt, type]) => new ast.Property().set({name, is_optional: !!opt, type})),
 
   MEMBER_FINAL = Either(METHOD, PROPERTY, DYNAMIC_PROPERTY) as Rule<ast.Member>,
 
@@ -112,8 +124,6 @@ export const
                                   .tf(([is_new, params, args, return_type]) => new ast.FunctionLiteral().set({
                                     type_parameters: params, arguments: args || [], return_type, is_new: !!is_new
                                   })),
-
-  DOTTED_NAME = List(T.id.tf(id => id.text), T.dot).tf(names => new ast.NameReference().set({reference: names})),
 
   ///////////////////////////////////////////////////
   NAMED = SequenceOf(

@@ -60,6 +60,11 @@ export class ExportAsNamespace extends Node {
   name_reference: NameReference
 }
 
+export class ImportEquals extends Node {
+  name: string
+  name_reference: NameReference
+}
+
 export class ExportEquals extends Node {
   name_reference: NameReference
 }
