@@ -10,7 +10,7 @@
  */
 
 import {LastOf, SequenceOf, Either, Optional, Rule, ZeroOrMore, List} from 'pegp'
-import {T, K, MULTI_COMMENT} from './base'
+import {T, K, HasDoc} from './base'
 import * as lit from './type_literals'
 
 import * as ast from './ast'
@@ -76,8 +76,7 @@ export const
     T.rbrace
   ).tf(([id, decls]) => new ast.Namespace().set({name: id.text, declarations: decls})),
 
-  DECLARATION: Rule<ast.Declaration> = SequenceOf(
-    MULTI_COMMENT,
+  DECLARATION: Rule<ast.Declaration> = HasDoc(
     Either(
       NAMESPACE,
       VAR,
@@ -85,4 +84,4 @@ export const
       TYPE,
       INTERFACE_OR_CLASS,
     ) as Rule<ast.Declaration>,
-  ).tf(([comment, rule]) => rule.set({doc: comment}))
+  )

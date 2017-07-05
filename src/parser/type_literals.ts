@@ -3,7 +3,7 @@
  */
 
 import {LastOf, FirstOf, SequenceOf, List, Optional, Either, ZeroOrMore, Rule} from 'pegp'
-import {T, K, MULTI_COMMENT} from './base'
+import {T, K, HasDoc} from './base'
 
 import * as ast from './ast'
 
@@ -73,18 +73,19 @@ export const
   ).tf(([id, key_type, opt, type]) => new ast.DynamicProperty().set({type, name: id.text, key_type, is_optional: !!opt})),
 
   PROPERTY = SequenceOf(
-    MULTI_COMMENT,
     Either(T.id, T.string, T.number),
     Optional(T.interrogation),
     LastOf(T.colon, () => TYPE)
-  ).tf(([doc, id, opt, type]) => new ast.Property().set({name: id.text, is_optional: !!opt, type, doc})),
+  ).tf(([id, opt, type]) => new ast.Property().set({name: id.text, is_optional: !!opt, type})),
 
-  MEMBER = SequenceOf(
-    Optional(K.static),
-    Optional(Either(K.public, K.private, K.protected)),
-    Optional(K.abstract),
-    Either(METHOD, PROPERTY, DYNAMIC_PROPERTY) as Rule<ast.Member>
-  ).tf(([stat, access, abs, member]) => member.set({is_static: !!stat, visibility: access ? access.text : '', is_abstract: !!abs})),
+  MEMBER = HasDoc(
+    SequenceOf(
+      Optional(K.static),
+      Optional(Either(K.public, K.private, K.protected)),
+      Optional(K.abstract),
+      Either(METHOD, PROPERTY, DYNAMIC_PROPERTY) as Rule<ast.Member>
+    ).tf(([stat, access, abs, member]) => member.set({is_static: !!stat, visibility: access ? access.text : '', is_abstract: !!abs}))
+  ),
 
   MEMBERS = FirstOf(
     LastOf(T.lbrace, ZeroOrMore(MEMBER)),

@@ -21,11 +21,9 @@ export abstract class Node {
 }
 
 export abstract class Declaration extends Node {
-
   doc: string
   name: string
   is_export: boolean
-
 }
 
 export class Module extends Declaration {

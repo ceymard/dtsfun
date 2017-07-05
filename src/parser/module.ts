@@ -1,6 +1,6 @@
 
 import {FirstOf, LastOf, SequenceOf, Optional, Either, List, ZeroOrMore, Rule, Lexeme, SequenceRule, ZeroOrMoreRule} from 'pegp'
-import {K, T, MULTI_COMMENT} from './base'
+import {K, T, HasDoc} from './base'
 import * as decl from './declarations'
 import * as lit from './type_literals'
 import * as ast from './ast'
@@ -14,10 +14,10 @@ export const
                                   new ast.SingleImportExport().set({name: id.text, as: as_id ? as_id.text : ''})
                                 ),
 
-  EXPORT_DECLARATION = SequenceOf(
-    MULTI_COMMENT,
+  EXPORT_DECLARATION = HasDoc(
     LastOf(K.export, Optional(K.declare), decl.DECLARATION) // we have to type it because Partial<> doesn't do well with union types.
-  ).tf(([comment, decl]) => decl.set({doc: comment, is_export: true})),
+      .tf(decl => decl.set({is_export: true}))
+  ),
 
 
   FROM_CLAUSE = SequenceOf(K.from, T.string).tf(([k, str]) => str.text),
@@ -87,12 +87,11 @@ export const
 
 
   // Inline module declaration in a file of modules
-  DECLARE_MODULE = SequenceOf(
-    MULTI_COMMENT,
+  DECLARE_MODULE = HasDoc(SequenceOf(
     LastOf(K.declare, K.module, T.string), // module name
     LastOf(T.lbrace, MODULE_CONTENTS),
     T.rbrace
-  ).tf(([doc, modname, contents]) => new ast.Module().set({doc: doc, name: modname.text, contents})),
+  ).tf(([modname, contents]) => new ast.Module().set({name: modname.text, contents}))),
 
   TOP_LEVEL = ZeroOrMore(Either(
     IMPORT,

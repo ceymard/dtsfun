@@ -1,7 +1,8 @@
 
-import {TokenList, Optional, TokenRule, Lexeme, Rule} from 'pegp'
+import {TokenList, Optional, TokenRule, Lexeme, Rule, SequenceOf} from 'pegp'
 
 export const tl = new TokenList()
+import * as ast from './ast'
 
 export const T = {
   space: tl.skip(/[\n\s\t\r ]+/) as TokenRule,
@@ -81,10 +82,16 @@ export const K = {
   keyof: kw('keyof')
 }
 
-
-export const   
-  /**
-   * Get a multi-line comment and return its text directly.
-   */
-  MULTI_COMMENT = Optional(T.multi_comment)
+   
+/**
+ * Get a multi-line comment and return its text directly.
+ */
+const  MULTI_COMMENT = Optional(T.multi_comment)
     .tf(lex => lex != null ? lex.text : '')
+
+export function HasDoc<R extends Rule<ast.Declaration>>(r: R): R {
+  return SequenceOf(MULTI_COMMENT, r).tf(([doc, res]) => {
+    res.doc = doc
+    return res
+  }) as R
+}
