@@ -76,27 +76,31 @@ export const
     Optional(LastOf(T.colon, () => TYPE))
   ).tf(([id, opt, type]) => new ast.Property().set({name: id.text, is_optional: !!opt, type})),
 
-  MEMBER = HasDoc(
+  MEMBER_FINAL = Either(METHOD, PROPERTY, DYNAMIC_PROPERTY) as Rule<ast.Member>,
+
+  READONLY = Either(MEMBER_FINAL, LastOf(K.readonly, MEMBER_FINAL).tf(mem => mem.set({is_readonly: true}))),
+
+  ABSTRACT = Either(READONLY, LastOf(K.abstract, READONLY).tf(mem => mem.set({is_abstract: true}))),
+
+  STATIC = Either(ABSTRACT, LastOf(K.static, ABSTRACT).tf(mem => mem.set({is_abstract: true}))),
+
+  MEMBER = Either(
+    STATIC, 
     SequenceOf(
-      Optional(Either(K.public, K.private, K.protected)),
-      Optional(K.static),
-      Optional(K.abstract),
-      Optional(K.readonly),
-      Either(METHOD, PROPERTY, DYNAMIC_PROPERTY) as Rule<ast.Member>
-    )
-      .tf(([access, stat, abs, read, member]) => 
-        member.set({
-          is_static: !!stat, 
-          visibility: access ? access.text : '', 
-          is_abstract: !!abs, 
-          is_readonly: !!read
-        }))
+      Either(K.public, K.private, K.protected), STATIC
+    ).tf(([access, mem]) => mem.set({visibility: access.text}))
   ),
 
   MEMBERS = FirstOf(
     LastOf(T.lbrace, ZeroOrMore(MEMBER)),
     T.rbrace
   ),
+
+  ///////////////////////////////////////////////////
+  IS_OPERATOR = SequenceOf(
+    FirstOf(T.id, K.is),
+    () => TYPE
+  ).tf(([id, type]) => new ast.IsType().set({name: id.text, type})),
 
   ///////////////////////////////////////////////////
   FUNCTION = SequenceOf(
@@ -133,6 +137,7 @@ export const
     LastOf(K.typeof, () => TYPE).tf(type => new ast.TypeOf().set({type})),
     FUNCTION,
     TUPLE,
+    IS_OPERATOR,
     NAMED,
     OBJECT_LITERAL,
     T.string.tf(str => new ast.StringType().set({string: str.text})),

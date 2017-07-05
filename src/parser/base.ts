@@ -5,18 +5,12 @@ export const tl = new TokenList()
 import * as ast from './ast'
 
 export const T = {
-  space: tl.skip(/[\n\s\t\r ]+/) as TokenRule,
   // single comment.
   comment: tl.skip(/\/\/[^\n]*\n/),
-  // we skip semi colons since they're not significant
-  // they would only be useful if we had ambiguous return statements or function calls,
-  // but .d.ts files are actually rather clean so we really don't want to have
-  // to say Optional(semi) everywhere.
-  semi: tl.skip(';'),
-  // We add the multi comment as skippable as we will only occasionnaly look
-  // for it.
   multi_comment: tl.skip(/\/\*((?!\*\/).|\n|\r)*\*\//m),
-  string: tl.add(/'((\\')|[^'])*'|"((\\")|[^'])*"/),
+  space: tl.skip(/[\n\s\t\r ]+/) as TokenRule,
+  semi: tl.skip(';'),
+  string: tl.add(/'((\\')|[^'\n])*'|"((\\")|[^'\n])*"/),
   number: tl.add(/[0-9]+(\.[0-9]+)?/),
   id: tl.add(/[a-zA-Z_$][a-zA-Z0-9_$]*/),
   fat_arrow: tl.add('=>'),
@@ -55,6 +49,7 @@ export const K = {
   import: kw('import'),
   from: kw('from'),
   as: kw('as'),
+  is: kw('is'),
   declare: kw('declare'),
 
   module: kw('module'),

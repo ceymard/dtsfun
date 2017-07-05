@@ -121,6 +121,10 @@ export class TypeModifier extends Type {
   type: Type
 }
 
+export class IsType extends Type {
+  name: string
+  type: Type
+}
 
 export class KeyOfType extends TypeModifier { }
 
@@ -168,7 +172,7 @@ export class Member extends Declaration {
   is_static: boolean = false
   is_optional: boolean = false
   is_readonly: boolean = false
-  visibility: string // public, private or protected
+  visibility: string = '' // public, private or protected
 }
 
 export class Property extends Member {
